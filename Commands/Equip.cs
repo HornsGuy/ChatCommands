@@ -111,6 +111,20 @@ namespace ChatCommands.Commands
             }
         }
 
+        protected void SpawnBot(Team agentTeam, BasicCultureObject cultureLimit)
+        {
+            BasicCharacterObject troopCharacter = MultiplayerClassDivisions.GetMPHeroClasses(cultureLimit).ToList<MultiplayerClassDivisions.MPHeroClass>().GetRandomElement<MultiplayerClassDivisions.MPHeroClass>().TroopCharacter;
+            MatrixFrame spawnFrame = Mission.Current.GetMissionBehavior<SpawnComponent>().GetSpawnFrame(agentTeam, troopCharacter.HasMount(), true);
+            AgentBuildData agentBuildData1 = new AgentBuildData(troopCharacter).Team(agentTeam).InitialPosition(in spawnFrame.origin);
+            Vec2 vec2 = spawnFrame.rotation.f.AsVec2;
+            vec2 = vec2.Normalized();
+            ref Vec2 local = ref vec2;
+            AgentBuildData agentBuildData2 = agentBuildData1.InitialDirection(in local).TroopOrigin((IAgentOriginBase)new BasicBattleAgentOrigin(troopCharacter)).EquipmentSeed(Mission.Current.GetMissionBehavior<MissionLobbyComponent>().GetRandomFaceSeedForCharacter(troopCharacter)).ClothingColor1(agentTeam.Side == BattleSideEnum.Attacker ? cultureLimit.Color : cultureLimit.ClothAlternativeColor).ClothingColor2(agentTeam.Side == BattleSideEnum.Attacker ? cultureLimit.Color2 : cultureLimit.ClothAlternativeColor2).IsFemale(troopCharacter.IsFemale);
+            agentBuildData2.Equipment(Equipment.GetRandomEquipmentElements(troopCharacter, !(Game.Current.GameType is MultiplayerGame), seed: agentBuildData2.AgentEquipmentSeed));
+            agentBuildData2.BodyProperties(BodyProperties.GetRandomBodyProperties(agentBuildData2.AgentRace, agentBuildData2.AgentIsFemale, troopCharacter.GetBodyPropertiesMin(), troopCharacter.GetBodyPropertiesMax(), (int)agentBuildData2.AgentOverridenSpawnEquipment.HairCoverType, agentBuildData2.AgentEquipmentSeed, troopCharacter.HairTags, troopCharacter.BeardTags, troopCharacter.TattooTags));
+            Mission.Current.SpawnAgent(agentBuildData2).AIStateFlags |= Agent.AIStateFlag.Alarmed;
+        }
+
         public bool Execute(NetworkCommunicator networkPeer, string[] args)
         {
             if(networkPeer.ControlledAgent != null)
@@ -119,10 +133,12 @@ namespace ChatCommands.Commands
                 Vec3 OriginalPos = networkPeer.ControlledAgent.Position;
                 Tuple<AgentBuildData, int> retVal = SpawnAgents(networkPeer);
 
-                BasicCharacterObject basicCharacterObject;
+                //networkPeer.GetComponent<MissionPeer>().BotsUnderControlAlive = 1;
+
+                //BasicCharacterObject basicCharacterObject;
 
                 AgentBuildData bda = retVal.Item1;
-
+                //bda = bda.MissionPeer(null);
                 Equipment e = new Equipment(networkPeer.ControlledAgent.Character.Equipment.Clone());
                 Equipment ogEquip = networkPeer.ControlledAgent.Character.Equipment.Clone();
                 ItemObject item = MBObjectManager.Instance.GetObject<ItemObject>("mp_plumed_lamellar_helmet");
@@ -140,7 +156,9 @@ namespace ChatCommands.Commands
                 bda = bda.Equipment(e);
                 Mission.Current.SpawnAgent(bda);
 
+                Mission.Current.GetMissionBehavior<MissionScoreboardComponent>().Sides[(int)(networkPeer.GetComponent<MissionPeer>().Team.Side)].BotScores.AliveCount += 1;
                 old.FadeOut(true, false);
+                
 
                 //// Spawn the original character so we can get rid of whatever BS override was occuring
                 //bda = bda.Equipment(ogEquip);
