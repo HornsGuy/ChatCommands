@@ -112,6 +112,7 @@
     <Compile Include="Commands\Unban.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="ConfigManager.cs" />
+    <Compile Include="EquipmentOverrideMissionBehavior.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="Patches\PatchChatBox.cs" />
     <Compile Include="Patches\PatchMaxNumberOfPlayers.cs" />

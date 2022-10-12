@@ -11,6 +11,8 @@ using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade.Source.Missions;
 using NetworkMessages.FromServer;
 using TaleWorlds.MountAndBlade.Network.Messages;
+using TaleWorlds.ObjectSystem;
+using TaleWorlds.MountAndBlade.Diamond;
 
 namespace ChatCommands
 {
@@ -398,6 +400,150 @@ namespace ChatCommands
         {
             MultiplayerOptions.Instance.GetOptionFromOptionType(MultiplayerOptions.OptionType.NumberOfBotsTeam1 ).UpdateValue(team1);
             MultiplayerOptions.Instance.GetOptionFromOptionType(MultiplayerOptions.OptionType.NumberOfBotsTeam2 ).UpdateValue(team2);
+        }
+
+        protected BodyProperties GetBodyProperties(
+      MissionPeer missionPeer,
+      BasicCultureObject cultureLimit)
+        {
+            NetworkCommunicator networkPeer = missionPeer.GetNetworkPeer();
+            if (networkPeer != null)
+                return networkPeer.PlayerConnectionInfo.GetParameter<PlayerData>("PlayerData").BodyProperties;
+            Debug.FailedAssert("networkCommunicator != null", "C:\\Develop\\MB3\\Source\\Bannerlord\\TaleWorlds.MountAndBlade\\Missions\\Multiplayer\\SpawnBehaviors\\SpawningBehaviors\\SpawningBehaviorBase.cs", nameof(GetBodyProperties), 366);
+            Team team = missionPeer.Team;
+            BasicCharacterObject troopCharacter = MultiplayerClassDivisions.GetMPHeroClasses(cultureLimit).ToList<MultiplayerClassDivisions.MPHeroClass>().GetRandomElement<MultiplayerClassDivisions.MPHeroClass>().TroopCharacter;
+            MatrixFrame spawnFrame = Mission.Current.GetMissionBehavior<SpawnComponent>().GetSpawnFrame(team, troopCharacter.HasMount(), true);
+            AgentBuildData agentBuildData1 = new AgentBuildData(troopCharacter).Team(team).InitialPosition(in spawnFrame.origin);
+            Vec2 vec2 = spawnFrame.rotation.f.AsVec2;
+            vec2 = vec2.Normalized();
+            ref Vec2 local = ref vec2;
+            AgentBuildData agentBuildData2 = agentBuildData1.InitialDirection(in local).TroopOrigin((IAgentOriginBase)new BasicBattleAgentOrigin(troopCharacter)).EquipmentSeed(Mission.Current.GetMissionBehavior<MissionLobbyComponent>().GetRandomFaceSeedForCharacter(troopCharacter, 0)).ClothingColor1(team.Side == BattleSideEnum.Attacker ? cultureLimit.Color : cultureLimit.ClothAlternativeColor).ClothingColor2(team.Side == BattleSideEnum.Attacker ? cultureLimit.Color2 : cultureLimit.ClothAlternativeColor2).IsFemale(troopCharacter.IsFemale);
+            agentBuildData2.Equipment(Equipment.GetRandomEquipmentElements(troopCharacter, !(Game.Current.GameType is MultiplayerGame), false, agentBuildData2.AgentEquipmentSeed));
+            agentBuildData2.BodyProperties(BodyProperties.GetRandomBodyProperties(agentBuildData2.AgentRace, agentBuildData2.AgentIsFemale, troopCharacter.GetBodyPropertiesMin(false), troopCharacter.GetBodyPropertiesMax(), (int)agentBuildData2.AgentOverridenSpawnEquipment.HairCoverType, agentBuildData2.AgentEquipmentSeed, troopCharacter.HairTags, troopCharacter.BeardTags, troopCharacter.TattooTags));
+            return agentBuildData2.AgentBodyProperties;
+        }
+
+        protected Tuple<AgentBuildData, int> GetAgentBuildDataForPlayer(NetworkCommunicator networkPeer)
+        {
+            BasicCultureObject cultureLimit1 = MBObjectManager.Instance.GetObject<BasicCultureObject>(MultiplayerOptions.OptionType.CultureTeam1.GetStrValue(MultiplayerOptions.MultiplayerOptionsAccessMode.CurrentMapOptions));
+            BasicCultureObject cultureLimit2 = MBObjectManager.Instance.GetObject<BasicCultureObject>(MultiplayerOptions.OptionType.CultureTeam2.GetStrValue(MultiplayerOptions.MultiplayerOptionsAccessMode.CurrentMapOptions));
+
+            MissionPeer component = networkPeer.GetComponent<MissionPeer>();
+
+            IAgentVisual agentVisualForPeer = component.GetAgentVisualForPeer(0);
+            BasicCultureObject basicCultureObject = component.Team.Side == BattleSideEnum.Attacker ? cultureLimit1 : cultureLimit2;
+            int num = component.SelectedTroopIndex;
+            IEnumerable<MultiplayerClassDivisions.MPHeroClass> mpHeroClasses = MultiplayerClassDivisions.GetMPHeroClasses(basicCultureObject);
+            MultiplayerClassDivisions.MPHeroClass mpHeroClass = num < 0 ? (MultiplayerClassDivisions.MPHeroClass)null : mpHeroClasses.ElementAt<MultiplayerClassDivisions.MPHeroClass>(num);
+            if (mpHeroClass == null && num < 0)
+            {
+                mpHeroClass = mpHeroClasses.First<MultiplayerClassDivisions.MPHeroClass>();
+                num = 0;
+            }
+            BasicCharacterObject heroCharacter = mpHeroClass.HeroCharacter;
+            Equipment equipment = heroCharacter.Equipment.Clone(false);
+            IEnumerable<ValueTuple<EquipmentIndex, EquipmentElement>> alternativeEquipments = MPPerkObject.GetOnSpawnPerkHandler(component)?.GetAlternativeEquipments(true);
+            if (alternativeEquipments != null)
+            {
+                foreach (ValueTuple<EquipmentIndex, EquipmentElement> valueTuple in alternativeEquipments)
+                    equipment[valueTuple.Item1] = valueTuple.Item2;
+            }
+            MatrixFrame matrixFrame;
+            if (agentVisualForPeer == null)
+            {
+
+                matrixFrame = Mission.Current.GetMissionBehavior<SpawnComponent>().GetSpawnFrame(component.Team, heroCharacter.Equipment.Horse.Item != null, false);
+            }
+            else
+            {
+                matrixFrame = agentVisualForPeer.GetFrame();
+                matrixFrame.rotation.MakeUnit();
+            }
+
+            AgentBuildData agentBuildData1 = new AgentBuildData(heroCharacter).MissionPeer(component).Equipment(equipment).Team(component.Team).TroopOrigin((IAgentOriginBase)new BasicBattleAgentOrigin(heroCharacter)).InitialPosition(in matrixFrame.origin);
+            Vec2 vec2 = matrixFrame.rotation.f.AsVec2.Normalized();
+            ref Vec2 local = ref vec2;
+            return new Tuple<AgentBuildData, int>(agentBuildData1.InitialDirection(in local).IsFemale(component.Peer.IsFemale).BodyProperties(this.GetBodyProperties(component, basicCultureObject)).VisualsIndex(0).ClothingColor1(component.Team == Mission.Current.AttackerTeam ? basicCultureObject.Color : basicCultureObject.ClothAlternativeColor).ClothingColor2(component.Team == Mission.Current.AttackerTeam ? basicCultureObject.Color2 : basicCultureObject.ClothAlternativeColor2), num);
+
+        }
+
+        public NetworkCommunicator GetPlayerNetworkPeerFromID(string ID)
+        {
+            foreach (var peer in GameNetwork.NetworkPeers)
+            {
+                if(peer.VirtualPlayer.Id.ToString() == ID)
+                {
+                    return peer;
+                }
+            }
+
+            return null;
+        }
+
+        public bool GivePlayerAgentCosmeticEquipment(string playerID, List<Tuple<EquipmentIndex, string>> itemsToGive)
+        {
+            NetworkCommunicator peer = GetPlayerNetworkPeerFromID(playerID);
+            if(peer != null)
+            {
+                return GivePlayerAgentCosmeticEquipment(peer, itemsToGive);
+            }
+            return false;
+        }
+
+        public bool GivePlayerAgentCosmeticEquipment(NetworkCommunicator networkPeer, List<Tuple<EquipmentIndex,string>> itemsToGive)
+        {
+            if (networkPeer.ControlledAgent != null)
+            {
+                Agent oldAgent = networkPeer.ControlledAgent;
+                bool wasRidingHorse = !oldAgent.SpawnEquipment[EquipmentIndex.Horse].IsEmpty;
+
+                Vec3 OriginalPos = oldAgent.Position;
+                Tuple<AgentBuildData, int> retVal = GetAgentBuildDataForPlayer(networkPeer);
+
+                AgentBuildData bda = retVal.Item1;
+
+                // Set position and look direction
+                bda = bda.InitialPosition(OriginalPos);
+                Vec3 lookDir3 = oldAgent.LookDirection;
+                Vec2 lookDir = lookDir3.AsVec2;
+                bda = bda.InitialDirection(lookDir);
+
+                Equipment newEquipment = new Equipment(networkPeer.ControlledAgent.Character.Equipment.Clone());
+
+                foreach (var itemToGive in itemsToGive)
+                {
+                    ItemObject item = MBObjectManager.Instance.GetObject<ItemObject>(itemToGive.Item2);
+                    if (item != null)
+                    {
+                        EquipmentElement newItemElement = newEquipment[itemToGive.Item1];
+                        newItemElement.CosmeticItem = item;
+                        newEquipment[itemToGive.Item1] = newItemElement;
+                    }
+                }
+
+                // Get 
+                newEquipment[EquipmentIndex.Horse] = oldAgent.SpawnEquipment[EquipmentIndex.Horse];
+                newEquipment[EquipmentIndex.HorseHarness] = oldAgent.SpawnEquipment[EquipmentIndex.HorseHarness];
+
+                // Override the equipment now that cosmetics are placed
+                bda = bda.Equipment(newEquipment);
+
+                // Spawning the agent, player immediately takes control
+                Agent newAgent = Mission.Current.SpawnAgent(bda);
+
+                // Make sure we wield the default items
+                newAgent.WieldInitialWeapons();
+
+                // Before we can remove the old agent, we need to increment the number of bots alive on the scoreboard.
+                // Oversight on Taleworlds' part
+                Mission.Current.GetMissionBehavior<MissionScoreboardComponent>().Sides[(int)(networkPeer.GetComponent<MissionPeer>().Team.Side)].BotScores.AliveCount += 1;
+
+                // Fade old agent and horse if ncessary
+                oldAgent.FadeOut(true, wasRidingHorse);
+
+                return true;
+            }
+            return false;
         }
     }
 }
