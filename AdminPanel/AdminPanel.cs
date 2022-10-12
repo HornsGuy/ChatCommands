@@ -519,6 +519,11 @@ namespace ChatCommands
                         newItemElement.CosmeticItem = item;
                         newEquipment[itemToGive.Item1] = newItemElement;
                     }
+                    // If we pass an empty string, clear the armor
+                    if(itemToGive.Item2 == "")
+                    {
+                        newEquipment[itemToGive.Item1] = new EquipmentElement();
+                    }
                 }
 
                 // Get 
