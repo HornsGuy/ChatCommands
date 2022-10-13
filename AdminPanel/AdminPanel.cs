@@ -526,12 +526,21 @@ namespace ChatCommands
                     }
                 }
 
-                // Get 
+                // Get selected for everything else
                 newEquipment[EquipmentIndex.Horse] = oldAgent.SpawnEquipment[EquipmentIndex.Horse];
                 newEquipment[EquipmentIndex.HorseHarness] = oldAgent.SpawnEquipment[EquipmentIndex.HorseHarness];
 
+                newEquipment[EquipmentIndex.Weapon0] = oldAgent.SpawnEquipment[EquipmentIndex.Weapon0];
+                newEquipment[EquipmentIndex.Weapon1] = oldAgent.SpawnEquipment[EquipmentIndex.Weapon1];
+                newEquipment[EquipmentIndex.Weapon2] = oldAgent.SpawnEquipment[EquipmentIndex.Weapon2];
+                newEquipment[EquipmentIndex.Weapon3] = oldAgent.SpawnEquipment[EquipmentIndex.Weapon3];
+                newEquipment[EquipmentIndex.Weapon4] = oldAgent.SpawnEquipment[EquipmentIndex.Weapon4];
+                
+
                 // Override the equipment now that cosmetics are placed
                 bda = bda.Equipment(newEquipment);
+
+                
 
                 // Spawning the agent, player immediately takes control
                 Agent newAgent = Mission.Current.SpawnAgent(bda);
