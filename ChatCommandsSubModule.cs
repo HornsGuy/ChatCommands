@@ -57,12 +57,6 @@ namespace ChatCommands
             // Game.OnGameCreated -= OnGameCreated;
         }
 
-        public override void OnMissionBehaviorInitialize(Mission mission)
-        {
-            base.OnMissionBehaviorInitialize(mission);
-            mission.AddMissionBehavior(new EquipmentOverrideMissionBehavior());
-        }
-
         public override void OnMultiplayerGameStart(Game game, object starterObject) {
 
             Debug.Print("** CHAT HANDLER ADDED **", 0, Debug.DebugColor.Green);

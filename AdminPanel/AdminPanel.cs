@@ -13,6 +13,7 @@ using NetworkMessages.FromServer;
 using TaleWorlds.MountAndBlade.Network.Messages;
 using TaleWorlds.ObjectSystem;
 using TaleWorlds.MountAndBlade.Diamond;
+using System.Reflection;
 
 namespace ChatCommands
 {
@@ -358,6 +359,16 @@ namespace ChatCommands
             }
         }
 
+        public void EndWarmup()
+        {
+            MultiplayerWarmupComponent warmup = Mission.Current.GetMissionBehavior<MultiplayerWarmupComponent>();
+
+            if (warmup != null)
+            {
+                typeof(MultiplayerWarmupComponent).GetMethod("EndWarmup", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(warmup, null);
+            }
+        }
+
         private void EndMissionThenStartMission(MissionData missionData)
         {
             MissionListener listener = new MissionListener();
@@ -367,6 +378,8 @@ namespace ChatCommands
             MultiplayerIntermissionVotingManager.Instance.IsMapVoteEnabled = false;
 
             EndingCurrentMissionThenStartingNewMission = true;
+
+            EndWarmup();
 
             listener.setMissionData(missionData);
             DedicatedCustomServerSubModule.Instance.EndMission();
