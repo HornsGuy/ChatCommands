@@ -108,6 +108,7 @@
     <Compile Include="Commands\Kill.cs" />
     <Compile Include="Commands\Login.cs" />
     <Compile Include="Commands\Me.cs" />
+    <Compile Include="Commands\Reset.cs" />
     <Compile Include="Commands\Teleport.cs" />
     <Compile Include="Commands\Unban.cs" />
     <Compile Include="Config.cs" />

@@ -315,6 +315,18 @@ namespace ChatCommands
             StartMission(currentState);
         }
 
+        public void BroadcastMessage(string message)
+        {
+            GameNetwork.BeginBroadcastModuleEvent();
+            GameNetwork.WriteMessage(new ServerMessage(message));
+            GameNetwork.EndBroadcastModuleEvent(GameNetwork.EventBroadcastFlags.None);
+        }
+
+        public void ResetMission()
+        {
+            Mission.Current.ResetMission();
+        }
+
         public void SetMultiplayerOptions(MissionData missionData, MultiplayerOptions.MultiplayerOptionsAccessMode opetionSet = MultiplayerOptions.MultiplayerOptionsAccessMode.CurrentMapOptions)
         {
             MultiplayerOptions.Instance.GetOptionFromOptionType(MultiplayerOptions.OptionType.GameType, opetionSet).UpdateValue(missionData.gameType);
