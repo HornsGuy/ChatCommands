@@ -32,8 +32,6 @@ namespace ChatCommands
                 DedicatedCustomServerSubModule.Instance.DedicatedCustomGameServer.KickPlayer(peer.Id, false);
             }
 
-            
-
             if (AdminManager.PlayerIsAdmin(peer.Id.ToString()))
             {
                 AdminManager.Admins.Add(peer.Id.ToString(), true);

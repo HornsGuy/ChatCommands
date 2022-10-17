@@ -92,6 +92,7 @@
     <Compile Include="Commands\ChangeMission.cs" />
     <Compile Include="Commands\ChangeMap.cs" />
     <Compile Include="Commands\ChangeMapFacs.cs" />
+    <Compile Include="Commands\EndWarmup.cs" />
     <Compile Include="Commands\Equip.cs" />
     <Compile Include="Commands\Factions.cs" />
     <Compile Include="Commands\id.cs" />
@@ -107,10 +108,13 @@
     <Compile Include="Commands\Kick.cs" />
     <Compile Include="Commands\Kill.cs" />
     <Compile Include="Commands\Login.cs" />
+    <Compile Include="Commands\MapTime.cs" />
     <Compile Include="Commands\Me.cs" />
     <Compile Include="Commands\Reset.cs" />
+    <Compile Include="Commands\RoundTime.cs" />
     <Compile Include="Commands\Teleport.cs" />
     <Compile Include="Commands\Unban.cs" />
+    <Compile Include="Commands\WarmupTime.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="ConfigManager.cs" />
     <Compile Include="Helpers.cs" />
